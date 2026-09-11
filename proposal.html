@@ -1,0 +1,731 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Will you be mine?</title>
+
+<!-- Fonts -->
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,600;1,500;1,600&family=Quicksand:wght@400;500;600;700&display=swap" rel="stylesheet" />
+
+<!-- React + Babel -->
+<script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+<script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+<style>
+  :root{
+    --cream: #fdf6f0;
+    --cream-deep: #f7ead9;
+    --blush: #f6d9de;
+    --blush-deep: #eebfca;
+    --lavender: #e6dbf3;
+    --lavender-deep: #d5c2ec;
+    --rose: #c65a79;
+    --rose-deep: #a23f5c;
+    --plum: #4a2e3f;
+    --plum-soft: #6e4d61;
+    --gold: #e3b980;
+    --card-radius: 22px;
+  }
+
+  * { box-sizing: border-box; }
+
+  html, body {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    background: var(--cream);
+    color: var(--plum);
+    font-family: 'Quicksand', sans-serif;
+    overflow-x: hidden;
+  }
+
+  #root { min-height: 100vh; position: relative; }
+
+  .font-display {
+    font-family: 'Playfair Display', serif;
+  }
+
+  /* ---------- Animated backdrop ---------- */
+  .backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    background:
+      radial-gradient(circle at 15% 20%, var(--blush) 0%, transparent 45%),
+      radial-gradient(circle at 85% 15%, var(--lavender) 0%, transparent 50%),
+      radial-gradient(circle at 50% 90%, var(--blush-deep) 0%, transparent 55%),
+      var(--cream);
+    background-size: 160% 160%, 160% 160%, 160% 160%, 100% 100%;
+    animation: driftBg 22s ease-in-out infinite alternate;
+  }
+
+  @keyframes driftBg {
+    0%   { background-position: 0% 0%, 100% 0%, 50% 100%, 0 0; }
+    100% { background-position: 20% 20%, 80% 10%, 40% 80%, 0 0; }
+  }
+
+  .floaters {
+    position: fixed;
+    inset: 0;
+    z-index: 1;
+    pointer-events: none;
+    overflow: hidden;
+  }
+
+  .heart-float {
+    position: absolute;
+    bottom: -10%;
+    color: var(--rose);
+    opacity: 0.35;
+    animation-name: floatUp;
+    animation-timing-function: ease-in;
+    animation-iteration-count: infinite;
+    will-change: transform, opacity;
+  }
+
+  @keyframes floatUp {
+    0%   { transform: translateY(0) translateX(0) rotate(0deg); opacity: 0; }
+    10%  { opacity: 0.35; }
+    90%  { opacity: 0.2; }
+    100% { transform: translateY(-115vh) translateX(var(--drift, 20px)) rotate(20deg); opacity: 0; }
+  }
+
+  .sparkle {
+    position: absolute;
+    color: var(--gold);
+    animation: twinkle 3.2s ease-in-out infinite;
+    will-change: transform, opacity;
+  }
+
+  @keyframes twinkle {
+    0%, 100% { opacity: 0.15; transform: scale(0.7) rotate(0deg); }
+    50%      { opacity: 0.8; transform: scale(1.15) rotate(25deg); }
+  }
+
+  /* ---------- Layout ---------- */
+  .stage {
+    position: relative;
+    z-index: 2;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 6vh 6vw;
+    text-align: center;
+  }
+
+  .glass-card {
+    background: rgba(255, 255, 255, 0.55);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    border: 1px solid rgba(255, 255, 255, 0.6);
+    border-radius: var(--card-radius);
+    box-shadow: 0 12px 40px rgba(162, 63, 92, 0.12);
+  }
+
+  .fade-in {
+    animation: fadeIn 0.9s ease forwards;
+  }
+  .fade-in-delay-1 { animation: fadeIn 0.9s ease 0.25s forwards; opacity: 0; }
+  .fade-in-delay-2 { animation: fadeIn 0.9s ease 0.5s forwards; opacity: 0; }
+  .fade-in-delay-3 { animation: fadeIn 0.9s ease 0.75s forwards; opacity: 0; }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(14px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  .btn {
+    font-family: 'Quicksand', sans-serif;
+    font-weight: 700;
+    font-size: 1.05rem;
+    padding: 0.95rem 2.3rem;
+    border-radius: 999px;
+    border: none;
+    cursor: pointer;
+    transition: transform 0.25s ease, box-shadow 0.25s ease;
+  }
+  .btn:focus-visible {
+    outline: 3px solid var(--rose-deep);
+    outline-offset: 3px;
+  }
+  .btn:active { transform: scale(0.96); }
+
+  .btn-primary {
+    background: linear-gradient(135deg, var(--rose) 0%, var(--rose-deep) 100%);
+    color: #fff8f4;
+    box-shadow: 0 10px 26px rgba(162, 63, 92, 0.35);
+  }
+  .btn-primary:hover { transform: translateY(-3px); box-shadow: 0 16px 32px rgba(162, 63, 92, 0.42); }
+
+  .btn-ghost {
+    background: rgba(255,255,255,0.6);
+    color: var(--plum);
+    border: 1.5px solid var(--blush-deep);
+  }
+  .btn-ghost:hover { transform: translateY(-2px); background: rgba(255,255,255,0.85); }
+
+  .no-btn {
+    background: rgba(255,255,255,0.7);
+    color: var(--plum-soft);
+    border: 1.5px solid var(--lavender-deep);
+    position: relative;
+    transition: transform 0.35s cubic-bezier(.34,1.56,.64,1), background 0.25s ease;
+  }
+
+  /* ---------- Timeline (story section) ---------- */
+  .timeline {
+    position: relative;
+    width: 100%;
+    max-width: 640px;
+    margin: 0 auto;
+  }
+  .timeline::before {
+    content: "";
+    position: absolute;
+    left: 50%;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    background: linear-gradient(to bottom, transparent, var(--blush-deep), var(--lavender-deep), transparent);
+    transform: translateX(-50%);
+  }
+  .timeline-item {
+    position: relative;
+    width: 100%;
+    display: flex;
+    margin-bottom: 2.1rem;
+  }
+  .timeline-item:nth-child(odd) { justify-content: flex-start; }
+  .timeline-item:nth-child(even) { justify-content: flex-end; }
+  .timeline-card {
+    width: 46%;
+    min-width: 220px;
+    padding: 1.15rem 1.3rem;
+    text-align: left;
+  }
+  .timeline-dot {
+    position: absolute;
+    left: 50%;
+    top: 1.4rem;
+    width: 11px;
+    height: 11px;
+    border-radius: 50%;
+    background: var(--rose);
+    transform: translateX(-50%);
+    box-shadow: 0 0 0 5px rgba(198, 90, 121, 0.18);
+  }
+
+  @media (max-width: 640px) {
+    .timeline::before { left: 18px; }
+    .timeline-item, .timeline-item:nth-child(even) { justify-content: flex-start; padding-left: 40px; }
+    .timeline-card { width: 100%; }
+    .timeline-dot { left: 18px; }
+  }
+
+  /* ---------- Reason cards ---------- */
+  .reason-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 1.1rem;
+    width: 100%;
+    max-width: 760px;
+  }
+  .reason-card {
+    perspective: 1000px;
+    height: 150px;
+    cursor: pointer;
+  }
+  .reason-inner {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    transition: transform 0.6s cubic-bezier(.4,.2,.2,1);
+    transform-style: preserve-3d;
+  }
+  .reason-card.flipped .reason-inner { transform: rotateY(180deg); }
+  .reason-face {
+    position: absolute;
+    inset: 0;
+    backface-visibility: hidden;
+    border-radius: var(--card-radius);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+    text-align: center;
+  }
+  .reason-front {
+    background: linear-gradient(160deg, var(--lavender) 0%, var(--blush) 100%);
+    font-family: 'Playfair Display', serif;
+    font-style: italic;
+    font-size: 1.1rem;
+    color: var(--plum-soft);
+  }
+  .reason-back {
+    background: linear-gradient(160deg, var(--rose) 0%, var(--rose-deep) 100%);
+    color: #fff6f2;
+    transform: rotateY(180deg);
+    font-weight: 600;
+    font-size: 1.02rem;
+  }
+
+  /* ---------- Confetti / celebration ---------- */
+  .confetti-piece {
+    position: absolute;
+    top: -5%;
+    width: 9px;
+    height: 14px;
+    opacity: 0.9;
+    animation-name: confettiFall;
+    animation-timing-function: linear;
+    animation-iteration-count: infinite;
+  }
+  @keyframes confettiFall {
+    0%   { transform: translateY(0) rotate(0deg); }
+    100% { transform: translateY(112vh) rotate(360deg); }
+  }
+
+  .pulse-heart {
+    animation: pulseHeart 1.8s ease-in-out infinite;
+  }
+  @keyframes pulseHeart {
+    0%, 100% { transform: scale(1); }
+    50%      { transform: scale(1.12); }
+  }
+
+  h1, h2, h3 { margin: 0; }
+
+  .eyebrow-line {
+    width: 46px;
+    height: 2px;
+    background: var(--rose-deep);
+    opacity: 0.5;
+    margin: 0 auto;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: 0.001ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.001ms !important;
+    }
+  }
+</style>
+</head>
+<body>
+<div id="root"></div>
+
+<script type="text/babel">
+const { useState, useEffect, useRef, useMemo, useCallback } = React;
+
+/* ============================================================
+   CUSTOMIZE ME
+   Edit the strings below to make this proposal your own.
+============================================================ */
+const CONFIG = {
+  recipientHintName: "", // optional, leave blank to keep it universal
+  memories: [
+    { title: "The day we first met", text: "I didn't know it yet, but that was the day everything quietly changed." },
+    { title: "The moment I started liking you", text: "It crept up on me slowly, and then all at once." },
+    { title: "That one conversation I'll never forget", text: "We talked for hours and it still felt too short." },
+    { title: "All the little moments that made me fall for you", text: "None of them were big. All of them mattered." },
+  ],
+  reasons: [
+    { front: "Your smile", back: "It's genuinely my favorite thing to see." },
+    { front: "The way you make me laugh", back: "Even on my worst days, somehow." },
+    { front: "How comfortable I feel around you", back: "I can just... be myself." },
+    { front: "Your little habits", back: "The small things you do without noticing. I notice." },
+    { front: "The way you care about people", back: "It's rare, and it's one of the best parts of you." },
+    { front: "Simply... you.", back: "That's really the whole reason." },
+  ],
+};
+
+/* ---------------- Floating background ---------------- */
+function FloatingBackground() {
+  const reduced = typeof window !== "undefined" &&
+    window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  const hearts = useMemo(() => {
+    const count = reduced ? 0 : 14;
+    return Array.from({ length: count }, (_, i) => ({
+      id: i,
+      left: Math.random() * 100,
+      size: 14 + Math.random() * 20,
+      duration: 10 + Math.random() * 10,
+      delay: Math.random() * 12,
+      drift: (Math.random() * 80 - 40) + "px",
+    }));
+  }, [reduced]);
+
+  const sparkles = useMemo(() => {
+    const count = reduced ? 0 : 18;
+    return Array.from({ length: count }, (_, i) => ({
+      id: i,
+      left: Math.random() * 100,
+      top: Math.random() * 100,
+      size: 6 + Math.random() * 10,
+      delay: Math.random() * 4,
+    }));
+  }, [reduced]);
+
+  return (
+    <React.Fragment>
+      <div className="backdrop" aria-hidden="true"></div>
+      <div className="floaters" aria-hidden="true">
+        {hearts.map(h => (
+          <div
+            key={"h" + h.id}
+            className="heart-float"
+            style={{
+              left: h.left + "%",
+              fontSize: h.size + "px",
+              animationDuration: h.duration + "s",
+              animationDelay: h.delay + "s",
+              "--drift": h.drift,
+            }}
+          >&#10084;</div>
+        ))}
+        {sparkles.map(s => (
+          <div
+            key={"s" + s.id}
+            className="sparkle"
+            style={{
+              left: s.left + "%",
+              top: s.top + "%",
+              fontSize: s.size + "px",
+              animationDelay: s.delay + "s",
+            }}
+          >&#10022;</div>
+        ))}
+      </div>
+    </React.Fragment>
+  );
+}
+
+/* ---------------- Landing ---------------- */
+function Landing({ onNext }) {
+  return (
+    <div className="stage">
+      <div className="fade-in" style={{ maxWidth: 560 }}>
+        <p className="font-display" style={{ fontSize: "1.5rem", fontStyle: "italic", color: "var(--plum-soft)" }}>
+          Hey you...
+        </p>
+        <h1 className="font-display fade-in-delay-1" style={{ fontSize: "clamp(2rem, 6vw, 3rem)", marginTop: "0.6rem", lineHeight: 1.25 }}>
+          I made something special for you.
+        </h1>
+        <div className="fade-in-delay-2" style={{ marginTop: "2.6rem" }}>
+          <button className="btn btn-primary" onClick={onNext}>Open it &#10084;</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ---------------- Story / timeline ---------------- */
+function StorySection({ onNext }) {
+  return (
+    <div className="stage">
+      <div className="fade-in" style={{ marginBottom: "2.6rem" }}>
+        <div className="eyebrow-line"></div>
+        <h2 className="font-display" style={{ fontSize: "clamp(1.6rem, 4.5vw, 2.3rem)", fontStyle: "italic", marginTop: "0.9rem" }}>
+          Before I ask you something...
+        </h2>
+      </div>
+
+      <div className="timeline">
+        {CONFIG.memories.map((m, idx) => (
+          <div className="timeline-item" key={idx}>
+            <span className="timeline-dot"></span>
+            <div className="timeline-card glass-card fade-in" style={{ animationDelay: (idx * 0.15) + "s", opacity: 0, animationFillMode: "forwards" }}>
+              <h3 className="font-display" style={{ fontSize: "1.05rem", color: "var(--rose-deep)" }}>{m.title}</h3>
+              <p style={{ marginTop: "0.5rem", fontSize: "0.95rem", color: "var(--plum-soft)", lineHeight: 1.5 }}>{m.text}</p>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      <button className="btn btn-ghost" style={{ marginTop: "1rem" }} onClick={onNext}>Keep going</button>
+    </div>
+  );
+}
+
+/* ---------------- Reasons ---------------- */
+function ReasonCard({ item }) {
+  const [flipped, setFlipped] = useState(false);
+  return (
+    <div
+      className={"reason-card" + (flipped ? " flipped" : "")}
+      onClick={() => setFlipped(f => !f)}
+      onMouseEnter={() => setFlipped(true)}
+      onMouseLeave={() => setFlipped(false)}
+      role="button"
+      tabIndex={0}
+      aria-pressed={flipped}
+      onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); setFlipped(f => !f); } }}
+    >
+      <div className="reason-inner">
+        <div className="reason-face reason-front">{item.front}</div>
+        <div className="reason-face reason-back">{item.back}</div>
+      </div>
+    </div>
+  );
+}
+
+function ReasonsSection({ onNext }) {
+  return (
+    <div className="stage">
+      <div className="fade-in" style={{ marginBottom: "2.2rem" }}>
+        <div className="eyebrow-line"></div>
+        <h2 className="font-display" style={{ fontSize: "clamp(1.6rem, 4.5vw, 2.3rem)", fontStyle: "italic", marginTop: "0.9rem" }}>
+          Things I secretly love about you
+        </h2>
+        <p style={{ marginTop: "0.6rem", color: "var(--plum-soft)", fontSize: "0.9rem" }}>(tap or hover a card)</p>
+      </div>
+
+      <div className="reason-grid">
+        {CONFIG.reasons.map((r, idx) => <ReasonCard item={r} key={idx} />)}
+      </div>
+
+      <button className="btn btn-ghost" style={{ marginTop: "2.4rem" }} onClick={onNext}>I'm ready</button>
+    </div>
+  );
+}
+
+/* ---------------- Buildup ---------------- */
+function Buildup({ onNext }) {
+  const lines = [
+    "I've been trying to find the perfect way to say this...",
+    "But maybe there isn't a perfect way.",
+    "So I'll just ask.",
+  ];
+  const [visibleCount, setVisibleCount] = useState(1);
+  const [showContinue, setShowContinue] = useState(false);
+
+  useEffect(() => {
+    if (visibleCount < lines.length) {
+      const t = setTimeout(() => setVisibleCount(v => v + 1), 1700);
+      return () => clearTimeout(t);
+    } else {
+      const t = setTimeout(() => setShowContinue(true), 900);
+      return () => clearTimeout(t);
+    }
+  }, [visibleCount]);
+
+  return (
+    <div className="stage">
+      <div style={{ maxWidth: 540, display: "flex", flexDirection: "column", gap: "1.1rem" }}>
+        {lines.slice(0, visibleCount).map((line, idx) => (
+          <p
+            key={idx}
+            className="font-display fade-in"
+            style={{
+              fontSize: idx === lines.length - 1 ? "clamp(1.6rem, 5vw, 2.1rem)" : "clamp(1.2rem, 4vw, 1.6rem)",
+              fontStyle: "italic",
+              color: idx === lines.length - 1 ? "var(--rose-deep)" : "var(--plum-soft)",
+            }}
+          >
+            {line}
+          </p>
+        ))}
+      </div>
+      {showContinue && (
+        <div className="fade-in" style={{ marginTop: "2.4rem" }}>
+          <button className="btn btn-primary" onClick={onNext}>Okay...</button>
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ---------------- Proposal ---------------- */
+function Proposal({ onYes }) {
+  const containerRef = useRef(null);
+  const [noStyle, setNoStyle] = useState({});
+  const [dodgeCount, setDodgeCount] = useState(0);
+  const [caption, setCaption] = useState("");
+
+  const captions = [
+    "nice try",
+    "are you sure?",
+    "really?",
+    "hmm, no.",
+    "keep trying \u2014 it's fun to watch",
+    "okay this is just cardio now",
+  ];
+
+  const dodge = useCallback(() => {
+    const container = containerRef.current;
+    if (!container) return;
+    const bounds = container.getBoundingClientRect();
+    const maxX = Math.max(bounds.width - 140, 40);
+    const maxY = Math.max(bounds.height - 60, 20);
+    const x = (Math.random() - 0.5) * 2 * (maxX / 2);
+    const y = (Math.random() - 0.5) * 2 * (maxY / 2);
+    setNoStyle({ transform: "translate(" + x + "px, " + y + "px)" });
+    setDodgeCount(c => c + 1);
+    setCaption(captions[Math.min(dodgeCount, captions.length - 1)]);
+  }, [dodgeCount]);
+
+  return (
+    <div className="stage">
+      <div className="fade-in" style={{ maxWidth: 560 }}>
+        <div className="eyebrow-line"></div>
+        <h1 className="font-display" style={{ fontSize: "clamp(2.1rem, 7vw, 3.4rem)", fontStyle: "italic", marginTop: "1rem", color: "var(--rose-deep)" }}>
+          Will you be mine?
+        </h1>
+      </div>
+
+      <div
+        ref={containerRef}
+        className="fade-in-delay-2"
+        style={{
+          position: "relative",
+          marginTop: "3rem",
+          display: "flex",
+          gap: "1.4rem",
+          justifyContent: "center",
+          flexWrap: "wrap",
+          width: "100%",
+          maxWidth: 460,
+          minHeight: 120,
+        }}
+      >
+        <button className="btn btn-primary" onClick={onYes}>YES &#10084;</button>
+        <button
+          className="btn no-btn"
+          style={noStyle}
+          onMouseEnter={dodge}
+          onClick={dodge}
+          onTouchStart={dodge}
+        >
+          NO
+        </button>
+      </div>
+      <p style={{ marginTop: "1.6rem", minHeight: "1.4em", color: "var(--plum-soft)", fontStyle: "italic" }}>
+        {caption}
+      </p>
+    </div>
+  );
+}
+
+/* ---------------- Confetti ---------------- */
+function Confetti() {
+  const pieces = useMemo(() => {
+    const colors = ["#c65a79", "#e6dbf3", "#e3b980", "#f6d9de", "#a23f5c"];
+    return Array.from({ length: 60 }, (_, i) => ({
+      id: i,
+      left: Math.random() * 100,
+      color: colors[i % colors.length],
+      duration: 3.5 + Math.random() * 3,
+      delay: Math.random() * 3,
+      rotate: Math.random() * 360,
+    }));
+  }, []);
+  return (
+    <div className="floaters" aria-hidden="true">
+      {pieces.map(p => (
+        <div
+          key={p.id}
+          className="confetti-piece"
+          style={{
+            left: p.left + "%",
+            background: p.color,
+            animationDuration: p.duration + "s",
+            animationDelay: p.delay + "s",
+            transform: "rotate(" + p.rotate + "deg)",
+            borderRadius: p.id % 3 === 0 ? "50%" : "3px",
+          }}
+        />
+      ))}
+    </div>
+  );
+}
+
+/* ---------------- Celebration ---------------- */
+function Celebration({ onDateYes }) {
+  const [stage, setStage] = useState(0);
+
+  useEffect(() => {
+    const t1 = setTimeout(() => setStage(1), 1600);
+    const t2 = setTimeout(() => setStage(2), 3000);
+    return () => { clearTimeout(t1); clearTimeout(t2); };
+  }, []);
+
+  return (
+    <div className="stage">
+      <Confetti />
+      <div style={{ position: "relative", zIndex: 3 }}>
+        <h1 className="font-display fade-in" style={{ fontSize: "clamp(1.9rem, 6vw, 2.8rem)", color: "var(--rose-deep)" }}>
+          YOU SAID YES!!! &#10084;&#129402;
+        </h1>
+        {stage >= 1 && (
+          <p className="font-display fade-in" style={{ fontSize: "clamp(1.1rem, 3.5vw, 1.4rem)", fontStyle: "italic", marginTop: "1.2rem", color: "var(--plum-soft)" }}>
+            I think you just made me the happiest person alive.
+          </p>
+        )}
+        {stage >= 2 && (
+          <div className="fade-in" style={{ marginTop: "2.2rem" }}>
+            <p style={{ fontSize: "1rem", color: "var(--plum-soft)", marginBottom: "1.4rem" }}>
+              Okay... now I have one more question.
+            </p>
+            <h2 className="font-display" style={{ fontSize: "clamp(1.4rem, 4.5vw, 1.9rem)", fontStyle: "italic", marginBottom: "1.6rem" }}>
+              Can I take you on a date?
+            </h2>
+            <button className="btn btn-primary" onClick={onDateYes}>Of course &#10084;</button>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+/* ---------------- Final ---------------- */
+function Final() {
+  return (
+    <div className="stage">
+      <div className="fade-in" style={{ maxWidth: 520 }}>
+        <div className="pulse-heart" style={{ fontSize: "2.6rem", color: "var(--rose)" }} aria-hidden="true">&#10084;</div>
+        <h1 className="font-display" style={{ fontSize: "clamp(1.9rem, 6vw, 2.6rem)", fontStyle: "italic", marginTop: "1.3rem" }}>
+          Then it's a date.
+        </h1>
+        <p style={{ marginTop: "1.4rem", fontSize: "1.05rem", color: "var(--plum-soft)", lineHeight: 1.7 }}>
+          Here's to us, to all the memories we've made,<br />
+          and to all the ones waiting for us.
+        </p>
+      </div>
+    </div>
+  );
+}
+
+/* ---------------- App ---------------- */
+function App() {
+  const [screen, setScreen] = useState("landing");
+
+  const screens = {
+    landing: <Landing onNext={() => setScreen("story")} />,
+    story: <StorySection onNext={() => setScreen("reasons")} />,
+    reasons: <ReasonsSection onNext={() => setScreen("buildup")} />,
+    buildup: <Buildup onNext={() => setScreen("proposal")} />,
+    proposal: <Proposal onYes={() => setScreen("celebration")} />,
+    celebration: <Celebration onDateYes={() => setScreen("final")} />,
+    final: <Final />,
+  };
+
+  return (
+    <React.Fragment>
+      <FloatingBackground />
+      {screens[screen]}
+    </React.Fragment>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById("root")).render(<App />);
+</script>
+</body>
+</html>
